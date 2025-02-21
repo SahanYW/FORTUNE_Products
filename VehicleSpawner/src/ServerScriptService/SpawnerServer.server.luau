@@ -177,8 +177,11 @@ local function Init()
 	
 	--[[
 			When loading in a large number of cars, the client loads the
-			cars faster than the server can show them (im assuming its due
-			to latency issues).
+			cars faster than the server can replicate them due to latency
+
+			Waiting for a specific instance to be created after the folder
+			is parented allows the server to finish replicating:
+			https://devforum.roblox.com/t/wait-for-model-to-be-fully-replicated-to-client/640718
 	]]
 	local loadedValue = Instance.new("IntValue")
 	loadedValue.Name = "CarsLoaded"
