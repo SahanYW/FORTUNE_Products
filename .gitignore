@@ -1,3 +1,6 @@
 # Roblox Studio lock files
 /*.rbxlx.lock
 /*.rbxl.lock
+
+# Auto generated gitignore from rojo
+/VehicleSpawner/.gitignore
