@@ -18,7 +18,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
-local Config = require(ReplicatedStorage.CarSpawnerConfig).Client
+local Config = require(ReplicatedStorage:WaitForChild("CarSpawnerStorage"):WaitForChild("CarSpawnerConfig")).Client
 local TopbarIcon = require(ReplicatedStorage.Icon)
 local MouseOver = require(script.MouseOverModule)
 
