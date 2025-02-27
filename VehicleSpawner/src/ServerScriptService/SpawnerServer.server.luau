@@ -112,16 +112,9 @@ local function SpawnCar(plr, carId)
 		return
 	end
 	
-	local category = vehicleIds[carId]:GetAttribute("CarCategory")
-	if category ~= nil then
-		local info = categories[category]
-
-		if info == nil then
-			warn("Car category \"" .. category .. "\" module does not exist")
-			info = {
-				CanPlayerSpawn = function() return true end
-			}
-		end
+	local categoryName = vehicleIds[carId]:GetAttribute("CarCategory")
+	if categoryName ~= nil then
+		local info = categories[categoryName]
 
 		if info.CanPlayerSpawn(plr) == false then
 			if info.ACCESS == "GAMEPASS" and info.PROMPT_GAMEPASS == true then
@@ -199,6 +192,19 @@ local function Init()
 		id.Parent = displayCar
 		
 		vehicleIds[index] = car
+
+		if car:GetAttribute("CarCategory") ~= nil then
+			local categoryName = car:GetAttribute("CarCategory")
+			if categories[categoryName] == nil then
+				warn(
+					car.Name .. " with category attribute \"" ..
+					categoryName .. "\" does not have category module"
+				)
+				categories[categoryName] = {
+					CanPlayerSpawn = function() return true end
+				}
+			end
+		end
 	end
 	
 	displayCarsFolder.Parent = ReplicatedStorage
