@@ -124,7 +124,7 @@ local function SpawnCar(plr, carId)
 		end
 
 		if info.CanPlayerSpawn(plr) == false then
-			if info.ACCESS == "GAMEPASS" then
+			if info.ACCESS == "GAMEPASS" and info.PROMPT_GAMEPASS == true then
 				MarketplaceService:PromptGamePassPurchase(plr, info.GAMEPASS_ID)
 			end
 			return
