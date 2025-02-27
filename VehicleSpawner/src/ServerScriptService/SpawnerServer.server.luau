@@ -17,13 +17,14 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+local MarketplaceService = game:GetService("MarketplaceService")
 
 local Config = require(ReplicatedStorage:WaitForChild("CarSpawnerStorage"):WaitForChild("CarSpawnerConfig")).Server
 
 local vehiclesFolder = ServerStorage:WaitForChild("Vehicles")
 local vehicleIds = {}
 local playerCars = {}
-
+local categories = {}
 
 local function PrepViewportModel(car)
 	local displayCar = car:Clone()
@@ -93,7 +94,6 @@ local function PrepViewportModel(car)
 	return displayCar
 end
 
-
 local function SpawnCar(plr, carId)
 	if playerCars[plr.UserId] == nil then
 		playerCars[plr.UserId] = {}
@@ -112,6 +112,25 @@ local function SpawnCar(plr, carId)
 		return
 	end
 	
+	local category = vehicleIds[carId]:GetAttribute("CarCategory")
+	if category ~= nil then
+		local info = categories[category]
+
+		if info == nil then
+			warn("Car category \"" .. category .. "\" module does not exist")
+			info = {
+				CanPlayerSpawn = function() return true end
+			}
+		end
+
+		if info.CanPlayerSpawn(plr) == false then
+			if info.ACCESS == "GAMEPASS" then
+				MarketplaceService:PromptGamePassPurchase(plr, info.GAMEPASS_ID)
+			end
+			return
+		end
+	end
+
 	if #cars >= Config.MaxCarsPerPlayer then
 		cars[#cars].car:Destroy()
 		cars[#cars] = nil
@@ -121,6 +140,8 @@ local function SpawnCar(plr, carId)
 	newCar.Parent = workspace
 	
 	-- Thanks to @arrivabus415 for the suggestion
+	-- TODO: Fix issue where cars spawn sideways when
+	-- model orientation isn't set to 0,0,0 while model is flat
 	local carCframe = plr.Character.PrimaryPart.CFrame:ToWorldSpace(CFrame.new(0,0,-Config.SpawnerDistance))
 	local _, rotY, _ = carCframe:ToOrientation()
 	newCar:PivotTo(CFrame.new(carCframe.Position) * CFrame.Angles(0, rotY + math.rad(180), 0))
@@ -135,7 +156,6 @@ local function SpawnCar(plr, carId)
 	return true, Config.SpawnerCooldown
 end
 
-
 local function DeleteCars(plr)
 	if playerCars[plr.UserId] == nil then
 		return
@@ -147,7 +167,6 @@ local function DeleteCars(plr)
 	
 	playerCars[plr.UserId] = {}
 end
-
 
 local function Init()
 	local displayCarsFolder = Instance.new("Folder")
@@ -161,6 +180,15 @@ local function Init()
 	deleteRemote.Name = "DeleteCars"
 	deleteRemote.Parent = ReplicatedStorage
 	
+	for _, categoryModule in pairs(ReplicatedStorage:WaitForChild("CarSpawnerCategories"):GetChildren()) do
+		if string.sub(categoryModule.Name, 1, 1) == "." then
+			continue
+		end
+
+		local info = require(categoryModule)
+		categories[info.ATTRIBUTE] = info
+	end
+
 	for index, car in pairs(vehiclesFolder:GetChildren()) do
 		local displayCar = PrepViewportModel(car)
 		displayCar.Parent = displayCarsFolder
