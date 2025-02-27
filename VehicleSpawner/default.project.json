@@ -9,7 +9,7 @@
           "$path": "src/ReplicatedStorage/Typechecks.luau"
         }
       },
-      "Categories": {
+      "CarSpawnerCategories": {
         "$className": "Folder",
         ".CategoryTemplate": {
           "$path": "src/ReplicatedStorage/CategoryTemplate.luau"
