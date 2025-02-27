@@ -3,19 +3,16 @@
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
-      "CarSpawnerStorage": {
+      "CarSpawnerConfig": {
+        "$path": "src/ReplicatedStorage/CarSpawnerConfig.luau",
+        "Typechecks": {
+          "$path": "src/ReplicatedStorage/Typechecks.luau"
+        }
+      },
+      "Categories": {
         "$className": "Folder",
-        "CarSpawnerConfig": {
-          "$path": "src/ReplicatedStorage/CarSpawnerConfig.luau",
-          "Typechecks": {
-            "$path": "src/ReplicatedStorage/Typechecks.luau"
-          }
-        },
-        "Categories": {
-          "$className": "Folder",
-          ".CategoryTemplate": {
-            "$path": "src/ReplicatedStorage/CategoryTemplate.luau"
-          }
+        ".CategoryTemplate": {
+          "$path": "src/ReplicatedStorage/CategoryTemplate.luau"
         }
       }
     },
