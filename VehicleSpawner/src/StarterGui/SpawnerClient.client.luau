@@ -288,7 +288,7 @@ end
 
 
 local function Init()
-	SelectSortType("List")
+	SelectSortType("Grid")
 	ToggleWindow(false)
 	
 	local toggleButton = TopbarIcon.getIcon("Car Spawner")
@@ -343,7 +343,7 @@ local function Init()
 	)
 	window.Grid.CanvasSize = UDim2.new(
 		0,0,0,
-		math.floor(#window.Grid:GetChildren() / Config.GridColumns) * (150 + Config.GridPadding)
+		math.ceil(#window.Grid:GetChildren() / Config.GridColumns) * (150 + Config.GridPadding)
 	)
 	window.List.Template:Destroy()
 	window.Grid.Template:Destroy()
