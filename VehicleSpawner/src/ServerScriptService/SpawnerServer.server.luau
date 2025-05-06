@@ -19,7 +19,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 local MarketplaceService = game:GetService("MarketplaceService")
 
-local Config = require(ReplicatedStorage:WaitForChild("CarSpawnerStorage"):WaitForChild("CarSpawnerConfig")).Server
+local Config = require(ReplicatedStorage:WaitForChild("CarSpawnerConfig")).Server
 
 local vehiclesFolder = ServerStorage:WaitForChild("Vehicles")
 local vehicleIds = {}
