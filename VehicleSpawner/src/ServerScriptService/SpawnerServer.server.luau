@@ -183,14 +183,10 @@ local function Init()
 	end
 
 	for index, car in pairs(vehiclesFolder:GetChildren()) do
-		local displayCar = PrepViewportModel(car)
+		local displayCar = PrepViewportModel(car) :: Model
 		displayCar.Parent = displayCarsFolder
 		
-		local id = Instance.new("IntValue")
-		id.Name = "VehicleId"
-		id.Value = index
-		id.Parent = displayCar
-		
+		displayCar:SetAttribute("VehicleId", index)
 		vehicleIds[index] = car
 
 		if car:GetAttribute("CarCategory") ~= nil then

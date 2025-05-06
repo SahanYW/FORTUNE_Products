@@ -199,7 +199,7 @@ local function CarButtonClicked(button: GuiButton)
 	end
 
 	local displayCar = button.ViewportFrame:FindFirstChildOfClass("Model")
-	local success, cooldown = spawnRemote:InvokeServer(displayCar.VehicleId.Value)
+	local success, cooldown = spawnRemote:InvokeServer(displayCar:GetAttribute("VehicleId"))
 
 	if success == true then
 		TopbarIcon.getIcon("SpawnerGuiToggle"):deselect()
