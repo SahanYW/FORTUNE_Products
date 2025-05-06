@@ -325,31 +325,6 @@ local function Init()
 	end)
 	deleteButton:oneClick()
 	
-	window.LoadingScreen.Visible = true
-	local progressBar = window.LoadingScreen.ProgressBar.Fill
-	local loadingScreenTweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Circular, Enum.EasingDirection.Out)
-	local loadingTween1 = TweenService:Create(progressBar, loadingScreenTweenInfo, { Size = UDim2.fromScale(1,1) })
-	local loadingTween2 = TweenService:Create(progressBar, loadingScreenTweenInfo, { Size = UDim2.fromScale(0,1) })
-
-	local loadingScreenThread = task.spawn(function()
-		progressBar.AnchorPoint = Vector2.new(0,0)
-		progressBar.Position = UDim2.fromScale(0,0)
-		loadingTween1:Play()
-		loadingTween1.Completed:Wait()
-		progressBar.AnchorPoint = Vector2.new(1,0)
-		progressBar.Position = UDim2.fromScale(1,0)
-		loadingTween2:Play()
-		loadingTween2.Completed:Wait()
-	end)
-
-	-- Replication of the cars folder may take longer to load on slower connections
-	local loadedValue: IntValue = ReplicatedStorage:WaitForChild("CarsLoaded")
-	repeat task.wait()
-	until #ReplicatedStorage:WaitForChild("SpawnerViewportModels"):GetChildren() == loadedValue.Value
-
-	task.cancel(loadingScreenThread)
-	window.LoadingScreen.Visible = false
-	
 	for index, car in pairs(ReplicatedStorage:WaitForChild("SpawnerViewportModels"):GetChildren()) do
 		local listButton = CreateButton(car, index, "List")
 		PrepareViewportFrame(car, listButton.ViewportFrame)

@@ -57,6 +57,11 @@ local function PrepViewportModel(car)
 				child:Destroy()
 				continue
 			end
+
+			if child:IsA("PackageLink") then	-- Cannot change parent of PackageLink
+				child:Destroy()
+				continue
+			end
 			
 			child.Parent = displayCar
 		end
@@ -184,6 +189,7 @@ local function Init()
 
 	for index, car in pairs(vehiclesFolder:GetChildren()) do
 		local displayCar = PrepViewportModel(car) :: Model
+		displayCar.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
 		displayCar.Parent = displayCarsFolder
 		
 		displayCar:SetAttribute("VehicleId", index)
@@ -204,19 +210,6 @@ local function Init()
 	end
 	
 	displayCarsFolder.Parent = ReplicatedStorage
-	
-	--[[
-			When loading in a large number of cars, the client loads the
-			cars faster than the server can replicate them due to latency
-
-			Waiting for a specific instance to be created after the folder
-			is parented allows the server to finish replicating:
-			https://devforum.roblox.com/t/wait-for-model-to-be-fully-replicated-to-client/640718
-	]]
-	local loadedValue = Instance.new("IntValue")
-	loadedValue.Name = "CarsLoaded"
-	loadedValue.Value = #displayCarsFolder:GetChildren()
-	loadedValue.Parent = ReplicatedStorage
 	
 	spawnRemote.OnServerInvoke = SpawnCar
 	deleteRemote.OnServerEvent:Connect(DeleteCars)
