@@ -26,7 +26,20 @@
             "$className": "Folder",
   
             "TireFX": {
-              "$path": "src/TireFX.client.luau"
+              "$path": "src/TireFX.client.luau",
+
+              "TireFX_Remote": {
+                "$className": "RemoteEvent",
+
+                "TireFX_Server": {
+                  "$path": "src/TireFX.server.luau"
+                }
+              },
+
+              "Effects": {
+                "$className": "Folder",
+                "$path": "src/Effects"
+              }
             }
           }
         }
