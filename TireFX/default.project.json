@@ -1,0 +1,36 @@
+{
+  "name": "TireFX",
+  "tree": {
+    "$className": "DataModel",
+    "$ignoreUnknownInstances": true,
+
+    "Workspace": {
+      "$ignoreUnknownInstances": true,
+        "$properties": {
+          "NeedsPivotMigration": false
+        },
+
+      "A-Chassis 6C by Novena": {
+        "$ignoreUnknownInstances": true,
+        "$className": "Model",
+        "$properties": {
+          "NeedsPivotMigration": false
+        },
+  
+        "A-Chassis Tune": {
+          "$ignoreUnknownInstances": true,
+          "$className": "ModuleScript",
+  
+          "Plugins": {
+            "$ignoreUnknownInstances": true,
+            "$className": "Folder",
+  
+            "TireFX": {
+              "$path": "src/TireFX.client.luau"
+            }
+          }
+        }
+      }
+    }
+  }
+}
