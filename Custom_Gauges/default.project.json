@@ -1,0 +1,24 @@
+{
+  "name": "CustomGauges",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "$ignoreUnknownInstances": true
+    },
+
+    "ServerScriptService": {
+      "$ignoreUnknownInstances": true
+    },
+
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "$ignoreUnknownInstances": true
+      }
+    },
+
+    "Workspace": {
+      "$ignoreUnknownInstances": true
+    }
+  }
+}
