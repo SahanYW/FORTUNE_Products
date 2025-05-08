@@ -29,17 +29,21 @@ Contributions are always welcome. Currently, FORTUNE is only looking for updates
 ### File structure
 To accomodate for the large amount of products, each sub-directory under the root repository will represent a product in the following format:
 ```
-\root
-    \product1
-        latest_release.rbxm
-        \previous_releases
-            v1.0.rbxm
-            v1.1.rbxm
-    \src
-        \service
-            .luau files
-    \product2
-    \product3
+root/
+├── product1/
+│   ├── latest_release.rbxm
+│   ├── previous_releases/
+│   │   ├── v1.0.rbxm
+│   │   ├── v1.1.rbxm
+│   │   ...
+│   └── src/
+│       ├── service1/
+│       │   └── *.luau files
+│       └── service2/
+│           └── *.luau files
+├── product2/
+│── product3/
+...
 ```
 
 Subject to change if a better file structure is found.
