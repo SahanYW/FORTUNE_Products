@@ -17,6 +17,7 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
+local TextService = game:GetService("TextService")
 
 local Config = require(ReplicatedStorage:WaitForChild("CarSpawnerConfig")).Client
 local TopbarIcon = require(ReplicatedStorage.Icon)
@@ -24,6 +25,8 @@ local MouseOver = require(script.MouseOverModule)
 
 local spawnRemote = ReplicatedStorage:WaitForChild("SpawnCar")
 local deleteRemote = ReplicatedStorage:WaitForChild("DeleteCars")
+
+local CategoryInfo = {}
 
 local gui = script.Parent
 local window = gui.Window
@@ -212,6 +215,10 @@ end
 
 function StartCarButtonConnections()
 	for _, button in pairs(activeFrame:GetChildren()) do
+		if not button:IsA("GuiButton") then
+			continue
+		end
+
 		local mouseEnter, mouseLeave = MouseOver.MouseEnterLeaveEvent(button)
 		local mouseEnterConnection = mouseEnter:Connect(function()
 			MouseOverCarButton(button)
@@ -231,36 +238,188 @@ function StartCarButtonConnections()
 end
 
 
-local function CreateButton(car: Model, index: number, buttonType: "List" | "Grid"): GuiButton
-	local button = window[buttonType].Template:Clone()
+local function CreateCategoryHeader(categoryName: string, layout: "List" | "Grid"): GuiObject
+	local header = window[layout].CategoryHeader:Clone()
+	header.TextLabel.Text = categoryName
+	
+	local textBounds = TextService:GetTextSize(
+		categoryName,
+		header.TextLabel.TextSize,
+		Enum.Font.Montserrat,
+		header.TextLabel.AbsoluteSize
+	)
+	local borderSize = UDim2.new(0.45,-(textBounds.X/1.5),0,1)
+	header.LeftBorder.Size = borderSize
+	header.RightBorder.Size = borderSize
+	header.Visible = true
+	
+	return header
+end
+
+local function CreateButton(car: Model, layout: "List" | "Grid"): GuiButton
+	local button = window[layout].Template:Clone()
 	button.VehicleName.Text = car.Name
 	button.Name = car.Name
 	button.Visible = true
-	
-	if buttonType == "List" then
-		button.Position = UDim2.new(
-			0.5,0,0,
-			(window.List.Template.Size.Y.Offset + Config.ListPadding) * (index-1)
-		)
-	else
+
+	if layout == "Grid" then
 		button.Size = UDim2.new(
 			1 / Config.GridColumns,
 			-((100 / Config.GridColumns) + ((Config.GridColumns-1) * Config.GridPadding)/Config.GridColumns),
 			0,
 			150
 		)
-
-		local row = math.floor((index-1) / Config.GridColumns)
-		local column = ((index-1) % Config.GridColumns)
-		button.Position = UDim2.new(
-			column * (1 / Config.GridColumns),
-			50 - (column * 100 / Config.GridColumns) + (column * Config.GridPadding/(Config.GridColumns-1)),
-			0,
-			row * (150 + Config.GridPadding)
-		)
 	end
-	
+
 	return button
+end
+
+local function CreateButtons(viewportModels: {})
+	local previousCategory = nil
+	local categoryCount = 0
+	local categoryCarCount = 0
+	local gridStart = 0
+	local rowCount = 0
+
+	for carCount, car in pairs(viewportModels) do
+        local category = car:GetAttribute("CarCategory")
+		if previousCategory ~= category then
+			local listHeader = CreateCategoryHeader(category, "List")
+			local gridHeader = CreateCategoryHeader(category, "Grid")
+
+			listHeader.Position = UDim2.new(
+				0,
+				0,
+				0,
+				window.List.CategoryHeader.Size.Y.Offset * categoryCount + (window.List.Template.Size.Y.Offset + Config.ListPadding) * (carCount-1)
+			)
+			
+			rowCount += math.ceil(categoryCarCount / Config.GridColumns)
+			gridHeader.Position = UDim2.new(
+				0,
+				0,
+				0,
+				window.Grid.CategoryHeader.Size.Y.Offset * categoryCount + (window.Grid.Template.Size.Y.Offset + Config.GridPadding) * rowCount
+			)
+
+			listHeader.Parent = window.List
+			gridHeader.Parent = window.Grid
+	
+			previousCategory = category
+			categoryCount += 1
+			categoryCarCount = 0
+			gridStart = gridHeader.Position.Y.Offset + gridHeader.Size.Y.Offset
+		end
+		-- Create buttons for both layouts
+        local listButton = CreateButton(car, "List")
+        local gridButton = CreateButton(car, "Grid")
+        
+        -- Set List button position
+        listButton.Position = UDim2.new(
+            0.5,
+            0,
+            0,
+            (window.List.Template.Size.Y.Offset + Config.ListPadding) * (carCount-1) + window.List.CategoryHeader.Size.Y.Offset * categoryCount
+        )
+        
+        -- Set Grid button position
+        local row = math.floor(categoryCarCount / Config.GridColumns)
+        local column = categoryCarCount % Config.GridColumns
+        gridButton.Position = UDim2.new(
+            column * (1 / Config.GridColumns),
+            50 - (column * 100 / Config.GridColumns) + (column * Config.GridPadding/(Config.GridColumns-1)),
+            0,
+            row * (150 + Config.GridPadding) + gridStart--window.Grid.CategoryHeader.Size.Y.Offset * categoryCount
+        )
+        
+        -- Setup viewport frames
+        PrepareViewportFrame(car, listButton.ViewportFrame)
+        PrepareViewportFrame(car, gridButton.ViewportFrame)
+        
+        -- Set parent and initialize viewport angles
+        listButton.Parent = window.List
+        gridButton.Parent = window.Grid
+        viewportAngles[listButton] = Config.ViewportCameraAngle
+        viewportAngles[gridButton] = Config.ViewportCameraAngle
+		categoryCarCount += 1
+	end
+
+	window.List.CanvasSize = UDim2.new(
+		0,0,0,
+		(window.List.Template.Size.Y.Offset + Config.ListPadding) * #viewportModels + window.List.CategoryHeader.Size.Y.Offset * categoryCount
+	)
+	window.Grid.CanvasSize = UDim2.new(
+		0,0,0,
+		math.ceil(categoryCarCount / Config.GridColumns) * (150 + Config.GridPadding) + gridStart
+	)
+end
+
+local function CreateButtonsOld(viewportModels: {})
+    local index = 0
+    local createdCategories = {}
+    local yOffset = {
+        List = 0,
+        Grid = 0
+    }
+
+    for _, car in pairs(viewportModels) do
+        local category = car:GetAttribute("CarCategory")
+        
+        -- Create category headers if this is a new category
+        if createdCategories[category] == nil then
+            
+            -- Create and position headers for both List and Grid views
+            local listHeader = CreateCategoryHeader(category, "List")
+            local gridHeader = CreateCategoryHeader(category, "Grid")
+            
+            -- Update yOffset for both layouts
+			yOffset.List += (#createdCategories * window.List.CategoryHeader.Size.Y.Offset) + (window.List.Template.Size.Y.Offset + Config.ListPadding) * index
+			yOffset.Grid += (#createdCategories * window.Grid.CategoryHeader.Size.Y.Offset) +  math.floor(index / Config.GridColumns) * (150 + Config.GridPadding)
+			
+			listHeader.Position = UDim2.fromOffset(0, yOffset.List)
+			gridHeader.Position = UDim2.fromOffset(0, yOffset.Grid)
+            
+            listHeader.Parent = window.List
+            gridHeader.Parent = window.Grid
+            
+            createdCategories[category] = true
+            index = 0
+        end
+        
+        -- Create buttons for both layouts
+        local listButton = CreateButton(car, "List")
+        local gridButton = CreateButton(car, "Grid")
+        
+        -- Set List button position
+        listButton.Position = UDim2.new(
+            0.5,
+            0,
+            0,
+            (window.List.Template.Size.Y.Offset + Config.ListPadding) * index + yOffset.List-- + window.List.CategoryHeader.Size.Y.Offset
+        )
+        
+        -- Set Grid button position
+        local row = math.floor(index / Config.GridColumns)
+        local column = index % Config.GridColumns
+        gridButton.Position = UDim2.new(
+            column * (1 / Config.GridColumns),
+            column * Config.GridPadding / (Config.GridColumns - 1),
+            0,
+            row * (150 + Config.GridPadding) + yOffset.Grid-- + window.Grid.CategoryHeader.Size.Y.Offset
+        )
+        
+        -- Setup viewport frames
+        PrepareViewportFrame(car, listButton.ViewportFrame)
+        PrepareViewportFrame(car, gridButton.ViewportFrame)
+        
+        -- Set parent and initialize viewport angles
+        listButton.Parent = window.List
+        gridButton.Parent = window.Grid
+        viewportAngles[listButton] = Config.ViewportCameraAngle
+        viewportAngles[gridButton] = Config.ViewportCameraAngle
+        
+        index += 1
+    end
 end
 
 
@@ -301,11 +460,9 @@ local function Init()
 			:align("Center")
 			:autoDeselect(false)
 	end
-	
 	toggleButton.toggled:Connect(ToggleWindow)
 	
 	local deleteButton = TopbarIcon.getIcon("Delete Cars")
-		
 	if deleteButton == nil then
 		deleteButton = TopbarIcon.new()
 			:setName("SpawnerGuiDelete")
@@ -325,26 +482,37 @@ local function Init()
 	end)
 	deleteButton:oneClick()
 	
-	for index, car in pairs(ReplicatedStorage:WaitForChild("SpawnerViewportModels"):GetChildren()) do
-		local listButton = CreateButton(car, index, "List")
-		PrepareViewportFrame(car, listButton.ViewportFrame)
-		listButton.Parent = window.List
-		viewportAngles[listButton] = Config.ViewportCameraAngle
-		
-		local gridButton = CreateButton(car, index, "Grid")
-		PrepareViewportFrame(car, gridButton.ViewportFrame)
-		gridButton.Parent = window.Grid
-		viewportAngles[gridButton] = Config.ViewportCameraAngle
+
+	local categoryOrder = {}
+	for _, categoryModule in pairs(ReplicatedStorage:WaitForChild("CarSpawnerCategories"):GetChildren()) do
+		if string.sub(categoryModule.Name, 1, 1) == "." then
+			continue
+		end
+
+		local info = require(categoryModule)
+		categoryOrder[info.ATTRIBUTE] = info.PRIORITY
+		CategoryInfo[info.ATTRIBUTE] = info
 	end
+	categoryOrder["Default"] = -1
 	
-	window.List.CanvasSize = UDim2.new(
-		0,0,0,
-		(window.List.Template.Size.Y.Offset + Config.ListPadding)*(#window.List:GetChildren() - 1)
-	)
-	window.Grid.CanvasSize = UDim2.new(
-		0,0,0,
-		math.ceil(#window.Grid:GetChildren() / Config.GridColumns) * (150 + Config.GridPadding)
-	)
+	local viewportModels = ReplicatedStorage:WaitForChild("SpawnerViewportModels"):GetChildren()
+	for index, car in pairs(viewportModels) do
+		local category = car:GetAttribute("CarCategory") or "Default"
+		if categoryOrder[category] ~= nil then
+			continue
+		end
+
+		categoryOrder[category] = index		-- assign random priority to categories
+	end
+
+	table.sort(viewportModels, function(a, b)
+		local categoryA = a:GetAttribute("CarCategory") or "Default"
+		local categoryB = b:GetAttribute("CarCategory") or "Default"
+		return categoryOrder[categoryA] < categoryOrder[categoryB]
+	end)
+
+	CreateButtons(viewportModels)
+
 	window.List.Template:Destroy()
 	window.Grid.Template:Destroy()
 	

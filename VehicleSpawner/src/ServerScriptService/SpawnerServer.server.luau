@@ -206,6 +206,8 @@ local function Init()
 					CanPlayerSpawn = function() return true end
 				}
 			end
+		else
+			car:SetAttribute("CarCategory", "Default")
 		end
 	end
 	
