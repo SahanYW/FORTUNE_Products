@@ -106,7 +106,7 @@ local function SpawnCar(plr, carId)
 
 	local cars = playerCars[plr.UserId]
 	if #cars > 0 and os.time() - cars[1].timestamp < Config.SpawnerCooldown then
-		return false, Config.SpawnerCooldown
+		return false, "Spawner on cooldown"
 	end
 	
 	if plr.Character == nil then
@@ -118,14 +118,14 @@ local function SpawnCar(plr, carId)
 	end
 	
 	local categoryName = vehicleIds[carId]:GetAttribute("CarCategory")
-	if categoryName ~= nil then
+	if categoryName ~= "Default" and categories[categoryName] ~= nil then
 		local info = categories[categoryName]
 
 		if info.CanPlayerSpawn(plr) == false then
 			if info.ACCESS == "GAMEPASS" and info.PROMPT_GAMEPASS == true then
 				MarketplaceService:PromptGamePassPurchase(plr, info.GAMEPASS_ID)
 			end
-			return
+			return false, "Player cannot access vehicle"
 		end
 	end
 
@@ -206,7 +206,7 @@ local function Init()
 					CanPlayerSpawn = function() return true end
 				}
 			end
-		else
+		elseif car:GetAttribute("CarCategory") == nil or car:GetAttribute("CarCategory") == "" then
 			car:SetAttribute("CarCategory", "Default")
 		end
 	end

@@ -58,7 +58,6 @@ local function ToggleWindow(isSelected)
 	ClearButtonConnections()
 end
 
-
 local function PrepareViewportFrame(car: Model, viewportFrame: ViewportFrame)
 	local displayCar = car:Clone()
 	displayCar.Parent = viewportFrame
@@ -80,7 +79,6 @@ local function PrepareViewportFrame(car: Model, viewportFrame: ViewportFrame)
 
 	displayCar.Parent = viewportFrame
 end
-
 
 local function MouseOverCarButton(button: GuiButton)
 	
@@ -116,7 +114,6 @@ local function MouseOverCarButton(button: GuiButton)
 		task.wait()
 	end
 end
-
 
 local function MouseLeaveCarButton(button: GuiButton)
 	hoveringButton = nil
@@ -162,7 +159,6 @@ local function MouseLeaveCarButton(button: GuiButton)
 	viewportAngles[button] = Config.ViewportCameraAngle
 end
 
-
 local function StartCooldownTimer(cooldownTime: number)
 	cooldownActive = true
 	local timerFrame = window.Cooldown
@@ -187,7 +183,6 @@ local function StartCooldownTimer(cooldownTime: number)
 	cooldownActive = false
 end
 
-
 local function CarButtonClicked(button: GuiButton)
 	if cooldownActive == true then
 		coroutine.wrap(function()
@@ -208,10 +203,9 @@ local function CarButtonClicked(button: GuiButton)
 		TopbarIcon.getIcon("SpawnerGuiToggle"):deselect()
 		coroutine.wrap(StartCooldownTimer)(cooldown)
 	else
-		warn("Spawner on cooldown")
+		warn(cooldown)
 	end
 end
-
 
 function StartCarButtonConnections()
 	for _, button in pairs(activeFrame:GetChildren()) do
@@ -236,7 +230,6 @@ function StartCarButtonConnections()
 		table.insert(connections, mouseClickConnection)
 	end
 end
-
 
 local function CreateCategoryHeader(categoryName: string, layout: "List" | "Grid"): GuiObject
 	local header = window[layout].CategoryHeader:Clone()
@@ -283,9 +276,16 @@ local function CreateButtons(viewportModels: {})
 
 	for carCount, car in pairs(viewportModels) do
         local category = car:GetAttribute("CarCategory")
+		if category ~= "Default" and CategoryInfo[category].HIDDEN then		--TODO: fix unexpected behavior when CarCategory is ""
+			continue
+		end
+
 		if previousCategory ~= category then
-			local listHeader = CreateCategoryHeader(category, "List")
-			local gridHeader = CreateCategoryHeader(category, "Grid")
+			local categoryDisplayName = if CategoryInfo[category]
+				then CategoryInfo[category].NAME
+				else category
+			local listHeader = CreateCategoryHeader(categoryDisplayName, "List")
+			local gridHeader = CreateCategoryHeader(categoryDisplayName, "Grid")
 
 			listHeader.Position = UDim2.new(
 				0,
@@ -354,75 +354,6 @@ local function CreateButtons(viewportModels: {})
 	)
 end
 
-local function CreateButtonsOld(viewportModels: {})
-    local index = 0
-    local createdCategories = {}
-    local yOffset = {
-        List = 0,
-        Grid = 0
-    }
-
-    for _, car in pairs(viewportModels) do
-        local category = car:GetAttribute("CarCategory")
-        
-        -- Create category headers if this is a new category
-        if createdCategories[category] == nil then
-            
-            -- Create and position headers for both List and Grid views
-            local listHeader = CreateCategoryHeader(category, "List")
-            local gridHeader = CreateCategoryHeader(category, "Grid")
-            
-            -- Update yOffset for both layouts
-			yOffset.List += (#createdCategories * window.List.CategoryHeader.Size.Y.Offset) + (window.List.Template.Size.Y.Offset + Config.ListPadding) * index
-			yOffset.Grid += (#createdCategories * window.Grid.CategoryHeader.Size.Y.Offset) +  math.floor(index / Config.GridColumns) * (150 + Config.GridPadding)
-			
-			listHeader.Position = UDim2.fromOffset(0, yOffset.List)
-			gridHeader.Position = UDim2.fromOffset(0, yOffset.Grid)
-            
-            listHeader.Parent = window.List
-            gridHeader.Parent = window.Grid
-            
-            createdCategories[category] = true
-            index = 0
-        end
-        
-        -- Create buttons for both layouts
-        local listButton = CreateButton(car, "List")
-        local gridButton = CreateButton(car, "Grid")
-        
-        -- Set List button position
-        listButton.Position = UDim2.new(
-            0.5,
-            0,
-            0,
-            (window.List.Template.Size.Y.Offset + Config.ListPadding) * index + yOffset.List-- + window.List.CategoryHeader.Size.Y.Offset
-        )
-        
-        -- Set Grid button position
-        local row = math.floor(index / Config.GridColumns)
-        local column = index % Config.GridColumns
-        gridButton.Position = UDim2.new(
-            column * (1 / Config.GridColumns),
-            column * Config.GridPadding / (Config.GridColumns - 1),
-            0,
-            row * (150 + Config.GridPadding) + yOffset.Grid-- + window.Grid.CategoryHeader.Size.Y.Offset
-        )
-        
-        -- Setup viewport frames
-        PrepareViewportFrame(car, listButton.ViewportFrame)
-        PrepareViewportFrame(car, gridButton.ViewportFrame)
-        
-        -- Set parent and initialize viewport angles
-        listButton.Parent = window.List
-        gridButton.Parent = window.Grid
-        viewportAngles[listButton] = Config.ViewportCameraAngle
-        viewportAngles[gridButton] = Config.ViewportCameraAngle
-        
-        index += 1
-    end
-end
-
-
 local function SelectSortType(sortType: "List" | "Grid")
 	local button = window.Sort[sortType].Button
 	button.BackgroundColor3 = Color3.new(1,1,1)
@@ -444,7 +375,6 @@ local function SelectSortType(sortType: "List" | "Grid")
 	ClearButtonConnections()
 	StartCarButtonConnections()
 end
-
 
 local function Init()
 	SelectSortType("Grid")
@@ -495,6 +425,7 @@ local function Init()
 	end
 	categoryOrder["Default"] = -1
 	
+	-- janky way to assign priorities to categories without an existing module
 	local viewportModels = ReplicatedStorage:WaitForChild("SpawnerViewportModels"):GetChildren()
 	for index, car in pairs(viewportModels) do
 		local category = car:GetAttribute("CarCategory") or "Default"
@@ -502,7 +433,7 @@ local function Init()
 			continue
 		end
 
-		categoryOrder[category] = index		-- assign random priority to categories
+		categoryOrder[category] = index
 	end
 
 	table.sort(viewportModels, function(a, b)
