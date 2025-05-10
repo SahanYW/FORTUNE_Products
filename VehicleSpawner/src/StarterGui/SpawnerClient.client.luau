@@ -276,13 +276,14 @@ local function CreateButtons(viewportModels: {})
 
 	for carCount, car in pairs(viewportModels) do
         local category = car:GetAttribute("CarCategory")
-		if category ~= "Default" and CategoryInfo[category].HIDDEN then		--TODO: fix unexpected behavior when CarCategory is ""
+		local info = CategoryInfo[category]
+		if category ~= "Default" and info and info.HIDDEN then		--TODO: fix unexpected behavior when CarCategory is ""
 			continue
 		end
 
 		if previousCategory ~= category then
-			local categoryDisplayName = if CategoryInfo[category]
-				then CategoryInfo[category].NAME
+			local categoryDisplayName = if info
+				then info.NAME
 				else category
 			local listHeader = CreateCategoryHeader(categoryDisplayName, "List")
 			local gridHeader = CreateCategoryHeader(categoryDisplayName, "Grid")

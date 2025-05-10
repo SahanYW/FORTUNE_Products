@@ -195,8 +195,12 @@ local function Init()
 		displayCar:SetAttribute("VehicleId", index)
 		vehicleIds[index] = car
 
-		if car:GetAttribute("CarCategory") ~= nil then
-			local categoryName = car:GetAttribute("CarCategory")
+		local categoryName = car:GetAttribute("CarCategory")
+		print(categoryName)
+
+		if categoryName == nil or categoryName == "" then		-- for some reason the "" conditon does not trigger
+			car:SetAttribute("CarCategory", "Default")
+		else
 			if categories[categoryName] == nil then
 				warn(
 					car.Name .. " with category attribute \"" ..
@@ -206,8 +210,6 @@ local function Init()
 					CanPlayerSpawn = function() return true end
 				}
 			end
-		elseif car:GetAttribute("CarCategory") == nil or car:GetAttribute("CarCategory") == "" then
-			car:SetAttribute("CarCategory", "Default")
 		end
 	end
 	
