@@ -378,7 +378,7 @@ local function SelectSortType(sortType: "List" | "Grid")
 end
 
 local function Init()
-	SelectSortType("List")
+	SelectSortType("Grid")
 	ToggleWindow(false)
 	
 	local toggleButton = TopbarIcon.getIcon("Car Spawner")
