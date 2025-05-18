@@ -17,13 +17,14 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+local MarketplaceService = game:GetService("MarketplaceService")
 
-local Config = require(ReplicatedStorage.CarSpawnerConfig).Server
+local Config = require(ReplicatedStorage:WaitForChild("CarSpawnerConfig")).Server
 
 local vehiclesFolder = ServerStorage:WaitForChild("Vehicles")
 local vehicleIds = {}
 local playerCars = {}
-
+local categories = {}
 
 local function PrepViewportModel(car)
 	local displayCar = car:Clone()
@@ -53,6 +54,11 @@ local function PrepViewportModel(car)
 			end
 			
 			if child:IsA("Attachment") then		-- Attachments error if not parented to basepart
+				child:Destroy()
+				continue
+			end
+
+			if child:IsA("PackageLink") then	-- Cannot change parent of PackageLink
 				child:Destroy()
 				continue
 			end
@@ -93,7 +99,6 @@ local function PrepViewportModel(car)
 	return displayCar
 end
 
-
 local function SpawnCar(plr, carId)
 	if playerCars[plr.UserId] == nil then
 		playerCars[plr.UserId] = {}
@@ -101,7 +106,7 @@ local function SpawnCar(plr, carId)
 
 	local cars = playerCars[plr.UserId]
 	if #cars > 0 and os.time() - cars[1].timestamp < Config.SpawnerCooldown then
-		return false, Config.SpawnerCooldown
+		return false, "Spawner on cooldown"
 	end
 	
 	if plr.Character == nil then
@@ -112,6 +117,18 @@ local function SpawnCar(plr, carId)
 		return
 	end
 	
+	local categoryName = vehicleIds[carId]:GetAttribute("CarCategory")
+	if categoryName ~= "Default" and categories[categoryName] ~= nil then
+		local info = categories[categoryName]
+
+		if info.CanPlayerSpawn(plr) == false then
+			if info.ACCESS == "GAMEPASS" and info.PROMPT_GAMEPASS == true then
+				MarketplaceService:PromptGamePassPurchase(plr, info.GAMEPASS_ID)
+			end
+			return false, "Player cannot access vehicle"
+		end
+	end
+
 	if #cars >= Config.MaxCarsPerPlayer then
 		cars[#cars].car:Destroy()
 		cars[#cars] = nil
@@ -121,6 +138,8 @@ local function SpawnCar(plr, carId)
 	newCar.Parent = workspace
 	
 	-- Thanks to @arrivabus415 for the suggestion
+	-- TODO: Fix issue where cars spawn sideways when
+	-- model orientation isn't set to 0,0,0 while model is flat
 	local carCframe = plr.Character.PrimaryPart.CFrame:ToWorldSpace(CFrame.new(0,0,-Config.SpawnerDistance))
 	local _, rotY, _ = carCframe:ToOrientation()
 	newCar:PivotTo(CFrame.new(carCframe.Position) * CFrame.Angles(0, rotY + math.rad(180), 0))
@@ -135,7 +154,6 @@ local function SpawnCar(plr, carId)
 	return true, Config.SpawnerCooldown
 end
 
-
 local function DeleteCars(plr)
 	if playerCars[plr.UserId] == nil then
 		return
@@ -147,7 +165,6 @@ local function DeleteCars(plr)
 	
 	playerCars[plr.UserId] = {}
 end
-
 
 local function Init()
 	local displayCarsFolder = Instance.new("Folder")
@@ -161,32 +178,42 @@ local function Init()
 	deleteRemote.Name = "DeleteCars"
 	deleteRemote.Parent = ReplicatedStorage
 	
+	for _, categoryModule in pairs(ReplicatedStorage:WaitForChild("CarSpawnerCategories"):GetChildren()) do
+		if string.sub(categoryModule.Name, 1, 1) == "." then
+			continue
+		end
+
+		local info = require(categoryModule)
+		categories[info.ATTRIBUTE] = info
+	end
+
 	for index, car in pairs(vehiclesFolder:GetChildren()) do
-		local displayCar = PrepViewportModel(car)
+		local displayCar = PrepViewportModel(car) :: Model
+		displayCar.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
 		displayCar.Parent = displayCarsFolder
 		
-		local id = Instance.new("IntValue")
-		id.Name = "VehicleId"
-		id.Value = index
-		id.Parent = displayCar
-		
+		displayCar:SetAttribute("VehicleId", index)
 		vehicleIds[index] = car
+
+		local categoryName = car:GetAttribute("CarCategory")
+		print(categoryName)
+
+		if categoryName == nil or categoryName == "" then		-- for some reason the "" conditon does not trigger
+			car:SetAttribute("CarCategory", "Default")
+		else
+			if categories[categoryName] == nil then
+				warn(
+					car.Name .. " with category attribute \"" ..
+					categoryName .. "\" does not have category module"
+				)
+				categories[categoryName] = {
+					CanPlayerSpawn = function() return true end
+				}
+			end
+		end
 	end
 	
 	displayCarsFolder.Parent = ReplicatedStorage
-	
-	--[[
-			When loading in a large number of cars, the client loads the
-			cars faster than the server can replicate them due to latency
-
-			Waiting for a specific instance to be created after the folder
-			is parented allows the server to finish replicating:
-			https://devforum.roblox.com/t/wait-for-model-to-be-fully-replicated-to-client/640718
-	]]
-	local loadedValue = Instance.new("IntValue")
-	loadedValue.Name = "CarsLoaded"
-	loadedValue.Value = #displayCarsFolder:GetChildren()
-	loadedValue.Parent = ReplicatedStorage
 	
 	spawnRemote.OnServerInvoke = SpawnCar
 	deleteRemote.OnServerEvent:Connect(DeleteCars)

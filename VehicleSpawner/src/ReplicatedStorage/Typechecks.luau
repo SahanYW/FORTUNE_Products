@@ -1,5 +1,7 @@
 export type CLIENT = {
 	
+	CategoryOrder: {string};
+
 	ListPadding: number;
 	GridColumns: number;
 	GridPadding: number;

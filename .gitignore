@@ -3,4 +3,4 @@
 /*.rbxl.lock
 
 # Auto generated gitignore from rojo
-/VehicleSpawner/.gitignore
+*.gitignore

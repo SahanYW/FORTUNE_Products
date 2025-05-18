@@ -2,29 +2,31 @@
   "name": "VehicleSpawner",
   "tree": {
     "$className": "DataModel",
-
     "ReplicatedStorage": {
       "CarSpawnerConfig": {
         "$path": "src/ReplicatedStorage/CarSpawnerConfig.luau",
         "Typechecks": {
           "$path": "src/ReplicatedStorage/Typechecks.luau"
         }
+      },
+      "CarSpawnerCategories": {
+        "$className": "Folder",
+        ".CategoryTemplate": {
+          "$path": "src/ReplicatedStorage/CategoryTemplate.luau"
+        }
       }
     },
-
     "ServerScriptService": {
       "SpawnerServer": {
         "$path": "src/ServerScriptService/SpawnerServer.server.luau"
       }
     },
-
     "ServerStorage": {
       "Vehicles": {
         "$className": "Folder",
         "$ignoreUnknownInstances": true
       }
     },
-
     "StarterGui": {
       "SpawnerGui": {
         "$className": "ScreenGui",
@@ -36,7 +38,6 @@
         }
       }
     },
-
     "Workspace": {
       "$ignoreUnknownInstances": true
     }
