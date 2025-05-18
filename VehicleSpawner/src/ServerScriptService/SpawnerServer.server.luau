@@ -106,7 +106,7 @@ local function SpawnCar(plr, carId)
 
 	local cars = playerCars[plr.UserId]
 	if #cars > 0 and os.time() - cars[1].timestamp < Config.SpawnerCooldown then
-		return false, Config.SpawnerCooldown
+		return false, "Spawner on cooldown"
 	end
 	
 	if plr.Character == nil then
@@ -118,14 +118,14 @@ local function SpawnCar(plr, carId)
 	end
 	
 	local categoryName = vehicleIds[carId]:GetAttribute("CarCategory")
-	if categoryName ~= nil then
+	if categoryName ~= "Default" and categories[categoryName] ~= nil then
 		local info = categories[categoryName]
 
 		if info.CanPlayerSpawn(plr) == false then
 			if info.ACCESS == "GAMEPASS" and info.PROMPT_GAMEPASS == true then
 				MarketplaceService:PromptGamePassPurchase(plr, info.GAMEPASS_ID)
 			end
-			return
+			return false, "Player cannot access vehicle"
 		end
 	end
 
@@ -195,8 +195,12 @@ local function Init()
 		displayCar:SetAttribute("VehicleId", index)
 		vehicleIds[index] = car
 
-		if car:GetAttribute("CarCategory") ~= nil then
-			local categoryName = car:GetAttribute("CarCategory")
+		local categoryName = car:GetAttribute("CarCategory")
+		print(categoryName)
+
+		if categoryName == nil or categoryName == "" then		-- for some reason the "" conditon does not trigger
+			car:SetAttribute("CarCategory", "Default")
+		else
 			if categories[categoryName] == nil then
 				warn(
 					car.Name .. " with category attribute \"" ..
