@@ -203,6 +203,19 @@ local function CarButtonClicked(button: GuiButton)
 		TopbarIcon.getIcon("SpawnerGuiToggle"):deselect()
 		coroutine.wrap(StartCooldownTimer)(cooldown)
 	else
+		coroutine.wrap(function()
+			local denied = window.AccessDenied :: TextLabel
+			denied.BackgroundTransparency = 0
+			denied.TextTransparency = 0
+			denied.Visible = true
+
+			local fadeInfo = TweenInfo.new(2, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+			local fadeTween = TweenService:Create(denied, fadeInfo, { BackgroundTransparency = 1; TextTransparency = 1 })
+			fadeTween:Play()
+			fadeTween.Completed:Connect(function()
+				denied.Visible = false
+			end)
+		end)()
 		warn(cooldown)
 	end
 end
