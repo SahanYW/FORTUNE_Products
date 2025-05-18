@@ -18,15 +18,6 @@
 local TYPECHECKING = require(script.Typechecks)
 local CONFIG: TYPECHECKING.CONFIG = {
 	Client = {
-
-		CategoryOrder = {
-			-- Use category attribute IDs
-
-			-- Example:
-			-- "Category1";
-			-- "Category2";
-			-- "Category3";
-		};
 		
 		ListPadding = 25;			-- Pixel spacing between buttons in list view
 		GridColumns = 4;			-- Button columns in grid view (warning: more columns lowers framerate)
