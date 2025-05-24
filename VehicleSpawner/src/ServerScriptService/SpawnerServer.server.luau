@@ -26,6 +26,15 @@ local vehicleIds = {}
 local playerCars = {}
 local categories = {}
 
+local AutoDeleteClasses = {
+	["Attachment"]		= true,		-- Attachments error if not parented to basepart
+    ["PackageLink"]		= true,		-- Cannot change parent of PackageLink
+    ["WeldConstraint"]	= true,		-- Constraints often cause issues when reparenting
+    ["Motor6D"]			= true,		-- Motor6D joints should be recreated rather than reparented
+    ["Bone"]			= true,		-- Bones cannot be reparented between models
+    ["UIComponents"]	= true 		-- UI elements often have specific parent requirements
+}
+
 local function PrepViewportModel(car)
 	local displayCar = car:Clone()
 	local driveSeatCframe = nil
@@ -52,18 +61,23 @@ local function PrepViewportModel(car)
 			if table.find(Config.ObjectExceptions, child.ClassName) then
 				continue
 			end
-			
-			if child:IsA("Attachment") then		-- Attachments error if not parented to basepart
+
+			if AutoDeleteClasses[child.ClassName] then
 				child:Destroy()
-				continue
 			end
 
-			if child:IsA("PackageLink") then	-- Cannot change parent of PackageLink
+			local success, err = pcall(function()
+				child.Parent = displayCar
+			end)
+
+			if not success then
+				warn(string.format("Failed to reparent %s (%s): %s", 
+					child.Name, 
+					child.ClassName, 
+					err
+				))
 				child:Destroy()
-				continue
 			end
-			
-			child.Parent = displayCar
 		end
 		
 		if not object:IsA("BasePart") then
