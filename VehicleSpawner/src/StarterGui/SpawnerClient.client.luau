@@ -450,7 +450,9 @@ local function Init()
 	CategoryInfo["Default"] = {
 		["NAME"] = "";
 		["ATTRIBUTE"] = "Default";
-		["PRIORITY"] = categoryOrder[1].PRIORITY - 1;	-- Always has the highest priority?
+		["PRIORITY"] = if #categoryOrder > 0
+			then categoryOrder[1].PRIORITY - 1	-- Always has the highest priority?
+			else -1;
 		["ACCESS"] = "ALL";
 		["HIDDEN"] = false
 	}
