@@ -27,12 +27,12 @@ local playerCars = {}
 local categories = {}
 
 local AutoDeleteClasses = {
-	["Attachment"]		= true,		-- Attachments error if not parented to basepart
-    ["PackageLink"]		= true,		-- Cannot change parent of PackageLink
-    ["WeldConstraint"]	= true,		-- Constraints often cause issues when reparenting
-    ["Motor6D"]			= true,		-- Motor6D joints should be recreated rather than reparented
-    ["Bone"]			= true,		-- Bones cannot be reparented between models
-    ["UIComponents"]	= true 		-- UI elements often have specific parent requirements
+	["Attachment"]		= true;		-- Attachments error if not parented to basepart
+    ["PackageLink"]		= true;		-- Cannot change parent of PackageLink
+    ["WeldConstraint"]	= true;		-- Constraints often cause issues when reparenting
+    ["Motor6D"]			= true;		-- Motor6D joints should be recreated rather than reparented
+    ["Bone"]			= true;		-- Bones cannot be reparented between models
+    ["UIComponents"]	= true;		-- UI elements often have specific parent requirements
 }
 
 local function PrepViewportModel(car)
@@ -64,6 +64,7 @@ local function PrepViewportModel(car)
 
 			if AutoDeleteClasses[child.ClassName] then
 				child:Destroy()
+				continue
 			end
 
 			local success, err = pcall(function()
@@ -148,7 +149,8 @@ local function SpawnCar(plr, carId)
 		cars[#cars] = nil
 	end
 	
-	local newCar = vehicleIds[carId]:Clone()
+	local newCar = vehicleIds[carId]:Clone() :: Model
+	newCar.PrimaryPart = newCar.DriveSeat		-- im incredibly stupid for not realizing this sooner
 	newCar.Parent = workspace
 	
 	-- Thanks to @arrivabus415 for the suggestion
@@ -157,7 +159,6 @@ local function SpawnCar(plr, carId)
 	local carCframe = plr.Character.PrimaryPart.CFrame:ToWorldSpace(CFrame.new(0,0,-Config.SpawnerDistance))
 	local _, rotY, _ = carCframe:ToOrientation()
 	newCar:PivotTo(CFrame.new(carCframe.Position) * CFrame.Angles(0, rotY + math.rad(180), 0))
-	newCar:MakeJoints()
 	
 	local data = {
 		car = newCar;
