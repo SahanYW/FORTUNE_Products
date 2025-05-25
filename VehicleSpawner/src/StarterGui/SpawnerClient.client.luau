@@ -288,7 +288,7 @@ local function CreateButtons(viewportModels: {})
 	local rowCount = 0
 
 	for carCount, car in pairs(viewportModels) do
-        local category = car:GetAttribute("CarCategory")
+        local category = car:GetAttribute("CarCategory") or "Default"
 		local info = CategoryInfo[category]
 		if category ~= "Default" and info and info.HIDDEN then		--TODO: fix unexpected behavior when CarCategory is ""
 			continue
@@ -426,18 +426,34 @@ local function Init()
 	end)
 	deleteButton:oneClick()
 	
-
 	local categoryOrder = {}
 	for _, categoryModule in pairs(ReplicatedStorage:WaitForChild("CarSpawnerCategories"):GetChildren()) do
 		if string.sub(categoryModule.Name, 1, 1) == "." then
 			continue
 		end
-
+		
 		local info = require(categoryModule)
-		categoryOrder[info.ATTRIBUTE] = info.PRIORITY
+		table.insert(categoryOrder, info)
 		CategoryInfo[info.ATTRIBUTE] = info
 	end
-	categoryOrder["Default"] = -1
+
+	-- This sucks, categoryOrder is created just to sort and then get deleted, lots of unused duplicate info
+	table.sort(categoryOrder, function(a,b)
+		if a.PRIORITY == b.PRIORITY then
+			b.PRIORITY += 1
+			CategoryInfo[b.ATTRIBUTE].PRIORITY = b.PRIORITY
+		end
+
+		return a.PRIORITY < b.PRIORITY
+	end)
+
+	CategoryInfo["Default"] = {
+		["NAME"] = "";
+		["ATTRIBUTE"] = "Default";
+		["PRIORITY"] = categoryOrder[1].PRIORITY - 1;	-- Always has the highest priority?
+		["ACCESS"] = "ALL";
+		["HIDDEN"] = false
+	}
 	
 	-- janky way to assign priorities to categories without an existing module
 	local viewportModels = ReplicatedStorage:WaitForChild("SpawnerViewportModels"):GetChildren()
